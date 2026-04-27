@@ -45,7 +45,7 @@ const normalizeOrder = (o) => ({
 export const orderApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
 
-    /** 주문 목록 — params: { start_date?, end_date?, status?, page? } */
+    /** 주문 목록 — params: { period?, start_date?, end_date?, status?, page?, size? } — 응답 content에 items 없음 */
     getOrders: builder.query({
       query: (params) => ({ url: '/orders', params }),
       transformResponse: (res) => {
@@ -109,7 +109,7 @@ export const orderApi = apiSlice.injectEndpoints({
 
     /** 주문 생성 — POST /orders → 201 Created (plain Long orderId, body에 user_id 미포함) */
     createOrder: builder.mutation({
-      query: (body) => ({ url: '/orders/get', method: 'POST', body, responseHandler: 'text' }),
+      query: (body) => ({ url: '/orders/subject', method: 'POST', body, responseHandler: 'text' }),
       transformResponse: (res) => ({ orderId: res ? Number(res) : null }),
       invalidatesTags: [{ type: 'Order', id: 'LIST' }],
       async onQueryStarted(_, { dispatch, queryFulfilled }) {

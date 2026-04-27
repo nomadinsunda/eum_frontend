@@ -1,5 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom'
 import { useGetOrderByIdQuery } from '../api/orderApi'
+import { useGetProductSummaryQuery } from '../api/productApi'
 import Spinner from '../shared/components/Spinner'
 
 export default function OrderDetailPage() {
@@ -8,16 +9,6 @@ export default function OrderDetailPage() {
 
   const { data: order, isLoading, isError } = useGetOrderByIdQuery(id)
 
-  const handleWriteReview = (item) => {
-    navigate('/review/write', {
-      state: {
-        orderId: order.id,
-        productId: item.productId,
-        productName: item.name,
-        productImage: item.img,
-      },
-    })
-  }
 
   if (isLoading) return <Spinner fullscreen />
   if (isError || !order) {
@@ -64,7 +55,7 @@ export default function OrderDetailPage() {
               <ProductItem
                 key={item.productId ?? idx}
                 item={item}
-                onWriteReview={() => handleWriteReview(item)}
+                orderId={order.id}
               />
             ))}
           </div>
@@ -188,16 +179,37 @@ function InfoRow({ label, value, isHighlight }) {
   )
 }
 
-function ProductItem({ item, onWriteReview }) {
-  const isDelivered = item.itemStatus === '배송완료' || item.itemStatus === 'DELIVERED'
+function ProductItem({ item, orderId }) {
+  const navigate = useNavigate()
+  const { data: summary } = useGetProductSummaryQuery(item.productId)
+  const img = item.img ?? summary?.img ?? null
+
+  const handleWriteReview = () => {
+    navigate('/review/write', {
+      state: {
+        orderId,
+        productId:    item.productId,
+        productName:  item.name,
+        productImage: img,
+      },
+    })
+  }
 
   return (
     <div className="flex gap-10 py-10 first:pt-0">
-      <div className="w-32 h-32 rounded-[28px] overflow-hidden border border-[#eee] shrink-0 bg-[#f9f9f9]">
-        {item.img
-          ? <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
-          : <div className="w-full h-full flex items-center justify-center text-[#ccc] text-3xl">🐾</div>
-        }
+      <div className="flex flex-col items-center gap-3 shrink-0">
+        <div className="w-32 h-32 rounded-[28px] overflow-hidden border border-[#eee] bg-[#f9f9f9]">
+          {img
+            ? <img src={img} alt={item.name} className="w-full h-full object-cover" />
+            : <div className="w-full h-full flex items-center justify-center text-[#ccc] text-3xl">🐾</div>
+          }
+        </div>
+        <button
+          onClick={handleWriteReview}
+          className="w-32 h-9 rounded-full bg-[#f5f5f5] text-[#555] font-bold text-[12px] hover:bg-[#3ea76e] hover:text-white transition-all border-none cursor-pointer"
+        >
+          구매후기
+        </button>
       </div>
       <div className="flex-1">
         <div className="flex justify-between items-start mb-3">
@@ -216,23 +228,13 @@ function ProductItem({ item, onWriteReview }) {
         {item.option && (
           <p className="text-[14px] font-bold text-[#bbb] mb-5 tracking-tight">{item.option}</p>
         )}
-        <div className="flex justify-between items-end gap-6">
-          <div className="space-y-2">
-            {item.trackingNo && (
-              <p className="text-[13px] text-[#ccc] font-bold">송장번호 : [{item.trackingNo}]</p>
-            )}
-            <p className="text-[16px] font-black text-[#111]">
-              수량 : {item.qty}개 / <span className="text-[20px]">{(item.price * item.qty).toLocaleString()}원</span>
-            </p>
-          </div>
-          {isDelivered && (
-            <button
-              onClick={onWriteReview}
-              className="h-10 px-8 rounded-full bg-[#f5f5f5] text-[#555] font-bold text-[13px] hover:bg-[#3ea76e] hover:text-white transition-all border-none cursor-pointer shrink-0"
-            >
-              구매후기
-            </button>
+        <div className="space-y-2">
+          {item.trackingNo && (
+            <p className="text-[13px] text-[#ccc] font-bold">송장번호 : [{item.trackingNo}]</p>
           )}
+          <p className="text-[16px] font-black text-[#111]">
+            수량 : {item.qty}개 / <span className="text-[20px]">{(item.price * item.qty).toLocaleString()}원</span>
+          </p>
         </div>
       </div>
     </div>

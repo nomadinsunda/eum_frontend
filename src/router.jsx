@@ -60,7 +60,7 @@ export default function Router() {
             <Route path="/coupon" element={<ProtectedRoute><UserCouponPage /></ProtectedRoute>} />
             <Route path="/point" element={<ProtectedRoute><UserPointPage /></ProtectedRoute>} />
             <Route path="/address" element={<ProtectedRoute><UserAddressPage /></ProtectedRoute>} />
-            <Route path="/review/write" element={<WriteReviewPage />} />
+            <Route path="/review/write" element={<ProtectedRoute><WriteReviewPage /></ProtectedRoute>} />
 
             <Route path="*" element={<LandingPage />} />
           </Route>

@@ -25,11 +25,11 @@ Order Server API에서 제공하는 order_state 코드 정의입니다.
 
 ---
 
-## `POST /orders`
+## `POST /orders/subject`
 
 주문 checkout을 요청합니다.
 
-> ⚠️ **알려진 문제 ([ORDER-02])**: `src/api/orderApi.js` `createOrder`의 URL이 현재 `/orders/get`으로 설정되어 있음. 명세 기준은 `/orders`이며 일치하지 않는다.
+> ℹ️ **엔드포인트 변경 이력**: `/orders/get` → `/orders/subject` (2026-04-27)
 
 ### Request Body
 
@@ -105,17 +105,23 @@ receiver_addr = "[우편번호] [기본주소] [추가주소] [나머지주소] 
 
 ### Query Parameters
 
-| Parameter    | Type              | Required | Default | Description                                    |
-| :----------- | :---------------- | :------: | :------ | :--------------------------------------------- |
-| `start_date` | String (ISO Date) |    No    | -       | 조회 시작일 (예: `2024-04-01`)                 |
-| `end_date`   | String (ISO Date) |    No    | -       | 조회 종료일 (예: `2024-04-22`)                 |
-| `status`     | String (Enum)     |    No    | -       | 주문 상태 (`READY`, `SHIPPED`, `CANCELLED` 등) |
-| `page`       | Integer           |    No    | `0`     | 페이지 번호 (0부터 시작)                       |
+| Parameter    | Type              | Required | Default | Description                                                                 |
+| :----------- | :---------------- | :------: | :------ | :-------------------------------------------------------------------------- |
+| `period`     | String            |    No    | -       | 상대 기간 (`1d`, `1m`, `3m`, `6m`). `start_date`/`end_date` 대신 사용      |
+| `start_date` | String (ISO Date) |    No    | -       | 조회 시작일 (예: `2024-04-01`). `period` 미사용 시 활성화                   |
+| `end_date`   | String (ISO Date) |    No    | -       | 조회 종료일 (예: `2024-04-22`). `period` 미사용 시 활성화                   |
+| `status`     | String (Enum)     |    No    | -       | 주문 상태 필터 (order_state 코드값 사용)                                    |
+| `page`       | Integer           |    No    | `1`     | 페이지 번호 (1부터 시작). 응답 `pageable.pageNumber`는 0-indexed로 표시됨   |
+| `size`       | Integer           |    No    | `10`    | 페이지 크기                                                                 |
+
+> **참고:** 응답 content 배열은 order 헤더 레벨 데이터만 포함하며 `items` 배열이 없다.
+> 상품 상세 목록이 필요하면 `GET /orders/{order_id}` 를 별도 호출해야 한다.
 
 ### Request Example
 
 ```http
-GET /api/v1/orders?start_date=2026-04-01&end_date=2026-04-20&status=ORDER_COMPLETED&page=0
+GET /api/v1/orders?period=3m&page=1&size=3
+GET /api/v1/orders?start_date=2026-04-01&end_date=2026-04-20&status=ORDER_COMPLETED&page=1&size=10
 ```
 
 ### Success Response

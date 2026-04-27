@@ -1,13 +1,14 @@
 import { useState, useRef } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { ChevronLeft, Star, Camera, Video, X } from 'lucide-react'
+import { useCreateReviewMutation } from '@/api/reviewApi'
 
 /* ─── 키워드 태그 카테고리 ──────────────────────────────────── */
 const TAG_CATEGORIES = [
   {
     key: 'preference',
     label: '기호도는 어떤가요?',
-    emoji: '😋',
+    emoji: ':yum:',
     options: [
       { value: 3, label: '잘 먹어요!' },
       { value: 2, label: '보통이에요' },
@@ -17,7 +18,7 @@ const TAG_CATEGORIES = [
   {
     key: 'repurchase',
     label: '재구매의사는 어떤가요?',
-    emoji: '🛍️',
+    emoji: ':shopping_bags:',
     options: [
       { value: 3, label: '있어요' },
       { value: 2, label: '고민 중이에요' },
@@ -27,7 +28,7 @@ const TAG_CATEGORIES = [
   {
     key: 'freshness',
     label: '신선도는 어떤가요?',
-    emoji: '✨',
+    emoji: ':sparkles:',
     options: [
       { value: 3, label: '아주 만족해요' },
       { value: 2, label: '보통이에요' },
@@ -68,7 +69,8 @@ export default function WriteReviewPage({ previewOnly = false, embedded = false,
   const imageInputRef = useRef(null)
   const videoInputRef = useRef(null)
   const totalMediaCount = images.length + (video ? 1 : 0)
-  const isLoading = false
+
+  const [createReview, { isLoading }] = useCreateReviewMutation()
 
   /* ─── 태그 토글 (카테고리당 1개 선택) ─────────────────────── */
   const toggleTag = (categoryKey, option) => {
@@ -153,16 +155,24 @@ export default function WriteReviewPage({ previewOnly = false, embedded = false,
     }
 
     const formData = new FormData()
-    formData.append('orderId', orderId)
-    formData.append('rating', rating)
-    formData.append('content', content)
+    formData.append('orderId',  orderId)
+    formData.append('rating',   rating)
+    formData.append('content',  content)
 
-    const tags = Object.values(selectedTags).filter(Boolean)
-    tags.forEach((tag) => formData.append('tags[]', tag))
+    // tags[preference]=3, tags[repurchase]=2 ... 형식으로 전송
+    Object.entries(selectedTags).forEach(([key, opt]) => {
+      if (opt) formData.append(`tags[${key}]`, opt.value)
+    })
+
     images.forEach(({ file }) => formData.append('images[]', file))
     if (video) formData.append('video', video.file)
 
-    setErrors((prev) => ({ ...prev, submit: '리뷰 등록 API가 연결되지 않았습니다.' }))
+    try {
+      await createReview({ productId, reviewData: formData }).unwrap()
+      navigate(-1)
+    } catch {
+      setErrors((prev) => ({ ...prev, submit: '리뷰 등록에 실패했습니다. 다시 시도해 주세요.' }))
+    }
   }
 
   /* ─── 렌더 ─────────────────────────────────────────────────── */
@@ -192,7 +202,7 @@ export default function WriteReviewPage({ previewOnly = false, embedded = false,
             <div className="w-16 h-16 rounded-[12px] overflow-hidden bg-[#FCFBF9] flex-shrink-0 border border-[#eee]">
               {productImage
                 ? <img src={productImage} alt={productName} className="w-full h-full object-cover" />
-                : <div className="w-full h-full flex items-center justify-center text-[#ccc] text-2xl">🐾</div>
+                : <div className="w-full h-full flex items-center justify-center text-[#ccc] text-2xl">:feet:</div>
               }
             </div>
             <div>
@@ -228,11 +238,11 @@ export default function WriteReviewPage({ previewOnly = false, embedded = false,
           </div>
           <p className="text-[13px] text-[#999]">
             {rating === 0 && '별점을 선택해 주세요'}
-            {rating === 1 && '😞 별로예요'}
-            {rating === 2 && '😕 아쉬워요'}
-            {rating === 3 && '😐 보통이에요'}
-            {rating === 4 && '😊 좋아요'}
-            {rating === 5 && '🐾 최고예요!'}
+            {rating === 1 && ':disappointed: 별로예요'}
+            {rating === 2 && ':confused: 아쉬워요'}
+            {rating === 3 && ':neutral_face: 보통이에요'}
+            {rating === 4 && ':blush: 좋아요'}
+            {rating === 5 && ':feet: 최고예요!'}
           </p>
           {errors.rating && (
             <p className="text-[12px] text-red-500 mt-2">{errors.rating}</p>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { DayPicker } from 'react-day-picker'
 import { ko } from 'react-day-picker/locale'
 import 'react-day-picker/style.css'
@@ -28,8 +28,33 @@ const PERIOD_API_MAP = {
   '6개월': '6m',
 }
 
+const STATUS_DISPLAY_MAP = {
+  ORDER_CHECKED_OUT:            '주문접수',
+  INVENTORY_RESERVED:           '결제대기',
+  INVENTORY_RESERVATION_FAILED: '재고부족',
+  PAYMENT_COMPLETED:            '결제완료',
+  PAYMENT_FAILED:               '결제실패',
+  INVENTORY_DEDUCTION_FAILED:   '처리오류',
+  INVENTORY_RELEASED:           '주문취소',
+  INVENTORY_RELEASE_FAILED:     '취소오류',
+  ORDER_COMPLETED:              '주문완료',
+  ORDER_CANCELLED:              '주문취소',
+}
+
+const STATUS_COLOR_MAP = {
+  ORDER_COMPLETED:              'text-[#3ea76e]',
+  PAYMENT_COMPLETED:            'text-[#3ea76e]',
+  INVENTORY_RESERVED:           'text-[#3ea76e]',
+  ORDER_CANCELLED:              'text-[#ef4444]',
+  PAYMENT_FAILED:               'text-[#ef4444]',
+  INVENTORY_RESERVATION_FAILED: 'text-[#ef4444]',
+  INVENTORY_DEDUCTION_FAILED:   'text-[#ef4444]',
+  INVENTORY_RELEASE_FAILED:     'text-[#ef4444]',
+  ORDER_CHECKED_OUT:            'text-[#f59e0b]',
+  INVENTORY_RELEASED:           'text-[#888]',
+}
+
 export default function OrderPage() {
-  const navigate = useNavigate()
   const [activeMainTab, setActiveMainTab] = useState('주문내역')
   const [status, setStatus] = useState('전체 주문처리상태')
   const [period, setPeriod] = useState('3개월')
@@ -73,17 +98,6 @@ export default function OrderPage() {
   const handleRangeChange = (newRange) => {
     setRange(newRange ?? { from: undefined, to: undefined })
     setPage(1)
-  }
-
-  const handleWriteReview = (order, item) => {
-    navigate('/review/write', {
-      state: {
-        orderId: order.id,
-        productId: item.productId,
-        productName: item.name,
-        productImage: item.img,
-      },
-    })
   }
 
   return (
@@ -182,47 +196,15 @@ export default function OrderPage() {
                   <Link to={`/order/detail/${order.id}`} className="text-[14px] font-bold text-[#aaa] hover:text-[#3ea76e] transition-colors">상세보기 &gt;</Link>
                 </div>
 
-                <div className="divide-y divide-[#f9f9f9]">
-                  {order.items.map((item, i) => (
-                    <div key={i} className="p-10 md:p-14">
-                      <div className="flex gap-10 items-center">
-                        <div className="w-32 h-32 bg-[#f8f8f8] rounded-[24px] overflow-hidden shrink-0 border border-[#eee]">
-                          <img src={item.img} className="w-full h-full object-cover" alt={item.name} />
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex justify-between items-start mb-5">
-                            <div>
-                              <p className="text-[18px] font-black text-[#111] mb-1.5 tracking-tight">{item.name}</p>
-                              <p className="text-[14px] font-bold text-[#bbb]">[옵션: {item.option}]</p>
-                            </div>
-                            <div className="text-right">
-                              <p className="text-[20px] font-black text-[#111] tracking-tighter">
-                                {typeof item.price === 'number' ? item.price.toLocaleString() : item.price}원
-                              </p>
-                              <p className="text-[14px] font-bold text-[#ccc] mt-1">{item.qty}개</p>
-                            </div>
-                          </div>
-
-                          <div className="mt-6 pt-6 border-t border-[#f5f5f5] flex items-center justify-between">
-                            <span className="text-[16px] font-black text-[#3ea76e]">{order.status}</span>
-                            <div className="flex gap-3">
-                              <button className="h-11 px-8 text-[13px] font-bold bg-[#f5f5f5] text-[#555] border-none transition-all active:scale-[0.95] hover:bg-[#ebebeb] cursor-pointer rounded-full">
-                                배송조회
-                              </button>
-                              {order.status === '배송완료' && (
-                                <button
-                                  onClick={() => handleWriteReview(order, item)}
-                                  className="h-11 px-8 text-[13px] font-bold bg-[#3ea76e] text-white border-none transition-all active:scale-[0.95] hover:bg-[#318a57] cursor-pointer rounded-full"
-                                >
-                                  구매후기
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                <div className="px-10 md:px-14 py-10 flex items-center justify-between gap-6">
+                  <div className="space-y-2">
+                    <span className={`text-[16px] font-black ${STATUS_COLOR_MAP[order.status] ?? 'text-[#f59e0b]'}`}>
+                      {STATUS_DISPLAY_MAP[order.status] ?? order.status}
+                    </span>
+                    <p className="text-[14px] font-bold text-[#bbb]">
+                      받는 분 · {order.address.recipient || order.ordererName}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="px-10 md:px-14 py-8 bg-[#fcfcfc] border-t border-[#f5f5f5] flex flex-col md:flex-row items-center justify-between gap-4">
