@@ -3,6 +3,13 @@ import { Link } from 'react-router-dom'
 import { ChevronRight, Headphones, MessageSquare, Info, Bot, Send, FileText } from 'lucide-react'
 import { useRagChatMutation } from '@/api/ragApi'
 
+const ERROR_MESSAGES = {
+  'AI-429': 'AI 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.',
+  'LLM-502': 'AI 응답 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.',
+  'EMB-502': '질문 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.',
+}
+const DEFAULT_ERROR = '죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.'
+
 const CSPage = () => {
   const [messages, setMessages] = useState([])
   const [sessionId, setSessionId] = useState(null)
@@ -23,14 +30,14 @@ const CSPage = () => {
     setInput('')
 
     try {
-      const result = await ragChat({ sessionId, question }).unwrap()
-      const { sessionId: newSessionId, answer, sources } = result.data ?? result
+      const { sessionId: newSessionId, answer, sources } = await ragChat({ sessionId, question }).unwrap()
       setSessionId(newSessionId)
       setMessages((prev) => [...prev, { role: 'assistant', text: answer, sources: sources ?? [] }])
-    } catch {
+    } catch (err) {
+      const code = err?.data?.code
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', text: '죄송합니다. 일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.' },
+        { role: 'assistant', text: ERROR_MESSAGES[code] ?? DEFAULT_ERROR },
       ])
     }
   }
