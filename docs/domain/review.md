@@ -1,6 +1,6 @@
 # Review 도메인
 
-기준일: 2026-04-28
+기준일: 2026-04-28 (최종수정)
 
 ## 개요
 
@@ -18,8 +18,7 @@
 | 작성 조건 | 주문 상태 `DELIVERED`인 경우만 | 서버 정책 |
 | 1주문 1리뷰 | 동일 orderId + productId 조합 1회 | 서버 정책 |
 | 내용 길이 | 최소 10자 ~ 최대 1,000자 | 클라이언트 유효성 검사 |
-| 이미지 첨부 | 최대 10장 (jpg·jpeg·png·webp, 장당 최대 10MB) | 클라이언트 유효성 검사 |
-| 동영상 첨부 | 최대 1개 (mp4·mov·avi·webm, 최대 500MB) | 클라이언트 유효성 검사 |
+| 미디어 첨부 | 사진+동영상 합산 최대 5개, 파일당 최대 50MB | `WriteReviewPage.jsx` → `FILE_MAX_SIZE_MB = 50` |
 
 ---
 
@@ -43,26 +42,51 @@ review
 
 ---
 
-## Review 데이터 구조
+## 백엔드 응답 구조 (`GET /reviews`)
+
+```json
+{
+  "status": "success",
+  "totalElements": 1,
+  "totalPages": 1,
+  "currentPage": 0,
+  "size": 3,
+  "data": [
+    {
+      "reviewId": 1,
+      "productId": 12,
+      "writerName": "user-1",
+      "star": 3,
+      "likeCount": 0,
+      "reviewMediaUrls": ["https://..."],
+      "mediaType": "IMAGE",
+      "content": "리뷰 내용",
+      "createdAt": "1777340228592",
+      "reviewDetailUrl": "/reviews/1"
+    }
+  ]
+}
+```
+
+> `createdAt`은 Unix 타임스탬프(ms) 문자열. `new Date(Number(createdAt))`으로 변환.
+
+---
+
+## 프론트엔드 정규화 구조 (`transformResponse`)
+
+`reviewApi.js`의 `transformResponse`가 백엔드 응답을 아래 구조로 변환한다.
 
 ```js
 {
-  id: number,
-  productId: number,
-  orderId: number,
-  userId: number,
-  userName: string,       // 마스킹 처리 (홍*동)
-  profileImage: string,
-  rating: number,         // 1~5 정수
-  content: string,
-  images: string[],       // 최대 10장
-  video: string | null,
-  tags: string[],         // 키워드 태그
-  helpfulCount: number,
-  isHelpful: boolean,     // 현재 사용자의 도움돼요 여부
-  isMyReview: boolean,
-  createdAt: string,      // ISO 8601
-  updatedAt: string,
+  id: number,          // reviewId
+  name: string,        // writerName
+  date: string,        // createdAt(ms) → 'YYYY. MM. DD'
+  views: number,       // viewCount (미제공 시 0)
+  rating: number,      // star (1~5)
+  text: string,        // content
+  imgs: string[],      // reviewMediaUrls
+  helpfulCount: number,// likeCount
+  optionText: string,  // optionName 있으면 '구매옵션: ...'
 }
 ```
 
@@ -76,7 +100,7 @@ review
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
-| `useGetProductReviewsQuery({ productId, params })` | GET | `/products/:productId/reviews` | 상품별 리뷰 목록 |
+| `useGetProductReviewsQuery({ productId, params })` | GET | `/reviews?productId=:id&page=:p&size=:s` | 상품별 리뷰 목록 |
 | `useGetMyReviewsQuery(params)` | GET | `/reviews/mine` | 내 리뷰 목록 |
 | `useGetReviewHighlightsQuery()` | GET | `/main/review-highlights` | 홈 포토리뷰 하이라이트 (메인 전용) — `{ title, items }` 반환 |
 
@@ -103,10 +127,10 @@ review
 
 | 훅 | 메서드 | 경로 | 설명 |
 |---|---|---|---|
-| `useCreateReviewMutation` | POST | `/products/:productId/reviews` | 리뷰 작성 |
-| `useUpdateReviewMutation` | PUT | `/reviews/:reviewId` | 리뷰 수정 |
-| `useDeleteReviewMutation` | DELETE | `/reviews/:reviewId` | 리뷰 삭제 |
-| `useMarkReviewHelpfulMutation` | POST | `/reviews/:reviewId/helpful` | 도움돼요 |
+| `useCreateReviewMutation` | POST | `/reviews` | 리뷰 작성 (multipart/form-data) |
+| `useUpdateReviewMutation` | PUT | `/reviews/:publicId` | 리뷰 수정 (multipart/form-data) |
+| `useDeleteReviewMutation` | DELETE | `/reviews/:publicId` | 리뷰 삭제 |
+| `useMarkReviewHelpfulMutation` | POST | `/reviews/:publicId/helpful` | 도움돼요 |
 
 ---
 
@@ -114,10 +138,10 @@ review
 
 | 액션 | invalidatesTags |
 |---|---|
-| `createReview` | `PRODUCT_<productId>`, `MINE` |
-| `updateReview` | `<reviewId>`, `MINE` |
-| `deleteReview` | `<reviewId>`, `MINE` |
-| `markReviewHelpful` | `<reviewId>` |
+| `createReview` | `PRODUCT_<productId>`, `MINE`, `Search.REVIEWS_<productId>` |
+| `updateReview` | `<publicId>`, `MINE`, `Search.REVIEWS_<productId>` |
+| `deleteReview` | `<publicId>`, `MINE` |
+| `markReviewHelpful` | `<publicId>` |
 
 ---
 
