@@ -25,6 +25,7 @@ import '@/api/wishlistApi'
 import '@/api/searchApi'
 import '@/api/paymentApi'
 import '@/api/noticeApi'
+import '@/api/ragApi'
 
 /**
  * logout 액션 발생 시 전체 API 캐시 초기화
