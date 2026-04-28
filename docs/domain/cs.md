@@ -9,15 +9,17 @@ AI 기능은 `ragserver`의 RAG(Retrieval-Augmented Generation) 기반으로 구
 
 ---
 
-## 페이지 구성 순서
+## 페이지 구성 순서 (사용자용 CSPage)
 
 | 섹션 | 설명 |
 |---|---|
 | 전화 상담 | 032-212-2202, 평일 10:00~18:00 (점심 13:00~14:00) |
 | AI 채팅 상담 | `useRagChatMutation` + 세션 복원 (`useGetSessionHistoryQuery`) |
-| AI 검색 | `useHybridSearchMutation` — BM25 + 벡터 하이브리드 검색 |
-| 문서 관리 | `useUploadDocumentMutation` + `useGetDocumentStatusQuery` (폴링) + `useGetDocumentChunksQuery` |
 | 커뮤니티 | NOTICE (`/notice`), FAQ (`/faq`) 링크 |
+
+> `POST /rag/chat`만 사용자에게 노출한다.  
+> 나머지 엔드포인트(search, documents)는 **백오피스 전용**이며 CSPage에 포함하지 않는다.  
+> `ragApi.js`에는 전체 엔드포인트가 정의되어 있고, 추후 백오피스 페이지에서 사용한다.
 
 ---
 
