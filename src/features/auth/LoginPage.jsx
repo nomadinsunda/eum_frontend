@@ -39,7 +39,7 @@ export default function LoginPage() {
         <div className="relative z-10 w-full h-full flex flex-col justify-between">
           <div className="text-left">
             <div className="text-white text-4xl font-black tracking-[-0.08em] select-none mb-24">
-              SWIFFY<span className="text-xs align-top ml-0.5 opacity-70 italic font-black">®</span>
+              eum<span className="text-xs align-top ml-0.5 opacity-70 italic font-black">®</span>
             </div>
             <div className="space-y-6">
               <h1 className="text-[64px] font-black text-white leading-[1.05] tracking-[-0.05em]">
@@ -47,12 +47,12 @@ export default function LoginPage() {
                 <span className="text-[#1B4332]">전해지는 진심.</span>
               </h1>
               <p className="text-[18px] text-white/70 font-bold tracking-tight max-w-xs leading-relaxed">
-                스위피와 함께 만드는 <br /> 우리 아이와의 깊은 기록.
+                eum과 함께 만드는 <br /> 우리 아이와의 깊은 기록.
               </p>
             </div>
           </div>
           <div className="relative self-end mb-10 mr-[-5%]">
-            <img src="/dog.png" alt="Swiffy Dog" className="w-[440px] h-auto rounded-[48px] rotate-[-4deg] drop-shadow-[0_45px_45px_rgba(0,0,0,0.3)]" />
+            <img src="/dog.png" alt="eum Dog" className="w-[440px] h-auto rounded-[48px] rotate-[-4deg] drop-shadow-[0_45px_45px_rgba(0,0,0,0.3)]" />
           </div>
         </div>
       </div>
@@ -121,7 +121,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full h-14 rounded-2xl bg-[#3ea76e] text-white font-black text-[15px] tracking-tight hover:bg-[#318a57] transition-all active:scale-[0.98] cursor-pointer border-none disabled:bg-[#eee] disabled:text-[#ccc] disabled:cursor-not-allowed"
             >
-              {isLoading ? '로그인 중...' : '스위피 시작하기'}
+              {isLoading ? '로그인 중...' : 'eum 시작하기'}
             </button>
           </div>
 

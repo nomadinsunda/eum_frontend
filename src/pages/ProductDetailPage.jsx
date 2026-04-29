@@ -120,7 +120,7 @@ function TabContent({ activeTab, product, setActiveTab }) {
             <h3 className="font-black text-[#111] mb-3 text-[16px]">교환/반품 안내</h3>
             <p className="font-bold text-[#888]">상품 수령 후 7일 이내 교환/반품 가능</p>
             <p className="font-bold text-[#888]">냉동제품 단순변심 교환/반품 불가</p>
-            <p className="font-bold text-[#888]">카카오톡 스위피 채널로 문의해주세요</p>
+            <p className="font-bold text-[#888]">카카오톡 eum 채널로 문의해주세요</p>
           </div>
         </div>
       )}

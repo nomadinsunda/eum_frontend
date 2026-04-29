@@ -89,13 +89,15 @@ Header (sticky)
 ```
 결제하기 클릭
  ├─ 유효성 검사 (받는사람 · 주소 · 휴대폰)
- ├─ POST /orders  →  orderId 발급
+ ├─ POST /orders/subject  →  orderId 발급
  ├─ POST /payments/prepare  →  백엔드 결제 레코드 생성
  ├─ widgets.setAmount()  →  Toss 위젯 금액 동기화
- └─ widgets.requestPayment()
+ └─ widgets.requestPayment({ orderId: `order-${orderId}`, ... })
       ├─ 성공  →  /payment/success (Toss 리다이렉트)
       └─ 실패  →  /payment/fail   (Toss 리다이렉트)
 ```
+
+> `requestPayment`의 `orderId`에는 `order-` prefix가 붙는다. `PaymentSuccessPage`에서 `replace('order-', '')`로 제거 후 처리한다 ([CHECKOUT-04] 미티게이션).
 
 - `USER_CANCEL` 에러는 토스트 없이 조용히 처리.
 - 결제 중 버튼 비활성화(`paying` 상태).

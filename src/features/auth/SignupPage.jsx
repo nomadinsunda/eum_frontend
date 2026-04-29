@@ -127,8 +127,8 @@ function TermsContentModal({ term, onClose }) {
       <div className="relative bg-white rounded-[32px] w-full max-w-[600px] max-h-[80vh] flex flex-col shadow-2xl">
         <div className="flex items-center justify-between px-10 pt-10 pb-6 border-b border-[#f5f5f5]">
           <div>
-            <span className={`text-[11px] font-black px-2 py-0.5 rounded-full mr-2 ${term.isRequired ? 'bg-[#e8f7ef] text-[#3ea76e]' : 'bg-[#f5f5f5] text-[#aaa]'}`}>
-              {term.isRequired ? '필수' : '선택'}
+            <span className={`text-[11px] font-black px-2 py-0.5 rounded-full mr-2 ${term.required ? 'bg-[#e8f7ef] text-[#3ea76e]' : 'bg-[#f5f5f5] text-[#aaa]'}`}>
+              {term.required ? '필수' : '선택'}
             </span>
             <span className="text-[18px] font-black text-[#111]">{term.title}</span>
           </div>
@@ -211,7 +211,7 @@ export default function SignupPage() {
         <div className="relative z-10 w-full h-full flex flex-col justify-between">
           <div className="text-left">
             <div className="text-white text-4xl font-black tracking-[-0.08em] select-none mb-24">
-              SWIFFY<span className="text-xs align-top ml-0.5 opacity-70 italic font-black">®</span>
+              eum<span className="text-xs align-top ml-0.5 opacity-70 italic font-black">®</span>
             </div>
             <div className="space-y-6">
               <h1 className="text-[64px] font-black text-white leading-[1.05] tracking-[-0.05em]">
@@ -219,12 +219,12 @@ export default function SignupPage() {
                 <span className="text-[#1B4332]">전해지는 진심.</span>
               </h1>
               <p className="text-[18px] text-white/70 font-bold tracking-tight max-w-xs leading-relaxed">
-                스위피와 함께 만드는 <br /> 우리 아이와의 깊은 기록.
+                eum과 함께 만드는 <br /> 우리 아이와의 깊은 기록.
               </p>
             </div>
           </div>
           <div className="relative self-end mb-10 mr-[-5%]">
-            <img src="/dog.png" alt="Swiffy Dog" className="w-[440px] h-auto rounded-[48px] rotate-[-4deg] drop-shadow-[0_45px_45px_rgba(0,0,0,0.3)]" />
+            <img src="/dog.png" alt="eum Dog" className="w-[440px] h-auto rounded-[48px] rotate-[-4deg] drop-shadow-[0_45px_45px_rgba(0,0,0,0.3)]" />
           </div>
         </div>
       </div>
@@ -364,8 +364,8 @@ export default function SignupPage() {
                         className="flex-1 text-[13px] font-bold text-[#555] cursor-pointer"
                         onClick={() => handleTermToggle(term.id)}
                       >
-                        <span className={`mr-1.5 text-[11px] font-black ${term.isRequired ? 'text-[#3ea76e]' : 'text-[#aaa]'}`}>
-                          [{term.isRequired ? '필수' : '선택'}]
+                        <span className={`mr-1.5 text-[11px] font-black ${term.required ? 'text-[#3ea76e]' : 'text-[#aaa]'}`}>
+                          [{term.required ? '필수' : '선택'}]
                         </span>
                         {term.title}
                       </span>

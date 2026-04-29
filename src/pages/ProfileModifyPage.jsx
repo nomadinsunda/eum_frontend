@@ -1,24 +1,41 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { AlertCircle, CheckCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { useGetMeQuery, useLogoutMutation } from '@/api/authApi'
 import { useUpdateProfileMutation, useDeleteAccountMutation } from '@/api/userApi'
 import Spinner from '@/shared/components/Spinner'
 
-const SwiffyInput = ({ label, readOnly, ...props }) => (
-  <div className="flex items-center border-b border-[#ececec] py-6 last:border-none">
-    <p className="w-36 text-[13px] font-black text-[#bbb] shrink-0">{label}</p>
-    <input
-      {...props}
-      readOnly={readOnly}
-      className={`flex-1 bg-transparent outline-none text-[15px] font-bold tracking-tight transition-all placeholder:text-[#ccc] ${
-        readOnly
-          ? 'text-[#ccc] cursor-default'
-          : 'text-[#111] focus:text-[#3ea76e]'
-      }`}
-    />
-  </div>
-)
+const EumInput = ({ label, readOnly, type, ...props }) => {
+  const [showPw, setShowPw] = useState(false)
+  const isPassword = type === 'password'
+
+  return (
+    <div className="flex items-center border-b border-[#ececec] py-6 last:border-none">
+      <p className="w-36 text-[13px] font-black text-[#bbb] shrink-0">{label}</p>
+      <div className="flex-1 flex items-center gap-2">
+        <input
+          {...props}
+          type={isPassword ? (showPw ? 'text' : 'password') : (type ?? 'text')}
+          readOnly={readOnly}
+          className={`flex-1 bg-transparent outline-none text-[15px] font-bold tracking-tight transition-all placeholder:text-[#ccc] ${
+            readOnly
+              ? 'text-[#ccc] cursor-default'
+              : 'text-[#111] focus:text-[#3ea76e]'
+          }`}
+        />
+        {isPassword && !readOnly && (
+          <button
+            type="button"
+            onClick={() => setShowPw(v => !v)}
+            className="text-[#bbb] hover:text-[#3ea76e] cursor-pointer bg-transparent border-none transition-colors shrink-0"
+          >
+            {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
 
 export default function ProfileModifyPage() {
   const navigate = useNavigate()
@@ -42,15 +59,14 @@ export default function ProfileModifyPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [deletePassword, setDeletePassword]   = useState('')
   const [deleteError, setDeleteError]         = useState('')
+  const [showDeletePw, setShowDeletePw]       = useState(false)
+
+  const isSocialAccount = !!me?.profileImgUrl && !me?.updatedAt
 
   const handleDelete = async () => {
     setDeleteError('')
-    if (!deletePassword) {
-      setDeleteError('비밀번호를 입력해 주세요.')
-      return
-    }
     try {
-      await deleteAccount({ password: deletePassword }).unwrap()
+      await deleteAccount(deletePassword ? { password: deletePassword } : {}).unwrap()
       await logoutMutation()
       navigate('/')
     } catch (err) {
@@ -133,27 +149,27 @@ export default function ProfileModifyPage() {
           </div>
 
           <div className="bg-[#f7f7f7] px-8 rounded-[24px] border border-[#efefef]">
-            <SwiffyInput
+            <EumInput
               label="이메일"
               value={me?.email ?? ''}
               readOnly
               placeholder="이메일"
             />
-            <SwiffyInput
+            <EumInput
               label="현재 비밀번호"
               type="password"
               placeholder="현재 비밀번호 입력"
               value={form.currentPassword}
               onChange={e => set('currentPassword', e.target.value)}
             />
-            <SwiffyInput
+            <EumInput
               label="새 비밀번호"
               type="password"
               placeholder="8~20자, 대소문자+숫자+특수문자"
               value={form.newPassword}
               onChange={e => set('newPassword', e.target.value)}
             />
-            <SwiffyInput
+            <EumInput
               label="비밀번호 확인"
               type="password"
               placeholder="새 비밀번호 재입력"
@@ -169,14 +185,14 @@ export default function ProfileModifyPage() {
             <h3 className="text-[18px] font-black text-[#111] tracking-tight text-center">사용자 정보</h3>
           </div>
           <div className="bg-[#f7f7f7] px-8 rounded-[24px] border border-[#efefef]">
-            <SwiffyInput
+            <EumInput
               label="이름"
               type="text"
               value={form.name}
               onChange={e => set('name', e.target.value)}
               placeholder="이름을 입력해주세요"
             />
-            <SwiffyInput
+            <EumInput
               label="휴대폰 번호"
               type="tel"
               value={form.phoneNumber}
@@ -238,12 +254,65 @@ export default function ProfileModifyPage() {
         </div>
 
         <div className="mt-20 text-center">
-          <button className="text-[12px] font-bold text-[#ccc] hover:text-red-400 transition-colors bg-transparent border-none cursor-pointer underline underline-offset-4">
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="text-[12px] font-bold text-[#ccc] hover:text-red-400 transition-colors bg-transparent border-none cursor-pointer underline underline-offset-4"
+          >
             회원 탈퇴하기
           </button>
         </div>
 
       </main>
+
+      {/* 회원 탈퇴 확인 모달 */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-[32px] shadow-2xl w-full max-w-[420px] mx-4 p-10">
+            <h2 className="text-[20px] font-black text-[#111] text-center mb-3 tracking-tight">정말 탈퇴하시겠습니까?</h2>
+
+            {!isSocialAccount && (
+              <div className="bg-[#f7f7f7] border border-[#efefef] rounded-2xl px-5 py-4 mb-4 flex items-center gap-2">
+                <input
+                  type={showDeletePw ? 'text' : 'password'}
+                  placeholder="현재 비밀번호를 입력해 주세요"
+                  value={deletePassword}
+                  onChange={e => setDeletePassword(e.target.value)}
+                  className="flex-1 bg-transparent outline-none text-[14px] font-bold text-[#111] placeholder:text-[#ccc]"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDeletePw(v => !v)}
+                  className="text-[#bbb] hover:text-[#3ea76e] cursor-pointer bg-transparent border-none transition-colors shrink-0"
+                >
+                  {showDeletePw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            )}
+
+            {deleteError && (
+              <div className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-100 rounded-xl mb-4">
+                <p className="text-[12px] font-bold text-red-500">{deleteError}</p>
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="w-full h-14 bg-red-500 text-white rounded-full text-[15px] font-black hover:bg-red-600 border-none cursor-pointer transition-all active:scale-[0.97] disabled:bg-[#eee] disabled:text-[#ccc] disabled:cursor-not-allowed"
+              >
+                {isDeleting ? '처리 중...' : '탈퇴하기'}
+              </button>
+              <button
+                onClick={() => { setShowDeleteModal(false); setDeletePassword(''); setDeleteError(''); setShowDeletePw(false) }}
+                className="w-full h-14 bg-[#f7f7f7] border border-[#eee] text-[#aaa] rounded-full text-[15px] font-bold hover:bg-[#efefef] hover:text-[#888] transition-all border-none cursor-pointer"
+              >
+                취소
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

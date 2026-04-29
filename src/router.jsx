@@ -19,8 +19,6 @@ import PaymentFailPage from './pages/PaymentFailPage'
 import UserProfilePage from './pages/UserProfilePage'
 import ProfileModifyPage from './pages/ProfileModifyPage'
 import WishListPage from './pages/WishListPage'
-import UserCouponPage from './pages/UserCouponPage'
-import UserPointPage from './pages/UserPointPage'
 import UserAddressPage from './pages/UserAddressPage '
 import WriteReviewPage from './pages/WriteReviewPage'
 import ReviewPage from './pages/ReviewPage'
@@ -28,6 +26,8 @@ import TermsPage from './pages/TermsPage'
 import PrivacyPage from './pages/PrivacyPage'
 import NoticePage from './pages/NoticePage'
 import NoticeDetailPage from './pages/NoticeDetailPage'
+import FaqPage from './pages/FaqPage'
+import FaqDetailPage from './pages/FaqDetailPage'
 export default function Router() {
   return (
     <BrowserRouter>
@@ -42,6 +42,8 @@ export default function Router() {
             <Route path="/cs" element={<CSPage />} />
             <Route path="/notice" element={<NoticePage />} />
             <Route path="/notice/:id" element={<NoticeDetailPage />} />
+            <Route path="/faq" element={<FaqPage />} />
+            <Route path="/faq/:id" element={<FaqDetailPage />} />
             <Route path="/review" element={<ReviewPage />} />
             <Route path="/brand-story" element={<BrandStoryPage />} />
             <Route path="/terms" element={<TermsPage />} />
@@ -57,8 +59,6 @@ export default function Router() {
             <Route path="/mypage" element={<ProtectedRoute><UserProfilePage /></ProtectedRoute>} />
             <Route path="/profile/modify" element={<ProtectedRoute><ProfileModifyPage /></ProtectedRoute>} />
             <Route path="/wishlist" element={<ProtectedRoute><WishListPage /></ProtectedRoute>} />
-            <Route path="/coupon" element={<ProtectedRoute><UserCouponPage /></ProtectedRoute>} />
-            <Route path="/point" element={<ProtectedRoute><UserPointPage /></ProtectedRoute>} />
             <Route path="/address" element={<ProtectedRoute><UserAddressPage /></ProtectedRoute>} />
             <Route path="/review/write" element={<ProtectedRoute><WriteReviewPage /></ProtectedRoute>} />
 

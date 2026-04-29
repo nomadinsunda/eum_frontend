@@ -87,6 +87,7 @@ useGetOrderByIdQuery(id)          → GET /orders/{order_id}   (주문 헤더 + 
 ┌──────────────┐  상품명              [상태 배지]
 │   이미지     │  [옵션명]
 │  128 × 128   │  수량 : N개 / X원
+│  (클릭 가능) │
 ├──────────────┤
 │  구매후기    │
 └──────────────┘
@@ -98,3 +99,52 @@ useGetOrderByIdQuery(id)          → GET /orders/{order_id}   (주문 헤더 + 
 - 클릭 시 `/review/write`(ProtectedRoute)로 이동.
 - navigate state: `{ orderId, productId, productName, productImage }`.
 - `WriteReviewPage`에서 `location.state`로 수신.
+
+### 상품 이미지 링크
+
+- 이미지 영역은 `<Link to="/product/detail/{productId}">` 로 감싸져 있어 클릭 시 상품 상세 페이지로 이동.
+
+---
+
+## 구매 취소 기능 (OrderDetailPage)
+
+> 2026-04-29 추가 (커밋: `3bcbe26`)
+
+### 취소 가능 상태 (`CANCELLABLE_STATES`)
+
+```js
+const CANCELLABLE_STATES = ['PAYMENT_COMPLETED', 'ORDER_COMPLETED']
+```
+
+아래 두 상태일 때만 "구매 취소" 버튼이 노출된다.
+
+| order_state | 표시 상태 | 설명 |
+| :--- | :--- | :--- |
+| `PAYMENT_COMPLETED` | 결제완료 | 결제 승인 완료, 배송 전 |
+| `ORDER_COMPLETED` | 주문완료 | 모든 주문 과정 정상 종료 |
+
+### 취소 플로우
+
+```
+구매 취소 버튼 클릭
+ └─ 확인 모달 표시 (전액 환불 안내)
+     ├─ 취소 확인 클릭 → DELETE /orders/{orderId}
+     │    ├─ 성공(202)  → 모달 닫힘, RTK Query 캐시 invalidate → 주문 상태 자동 리프레시
+     │    ├─ 409        → "현재 상태에서는 취소할 수 없습니다." (모달 내 인라인)
+     │    ├─ 404        → "주문 정보를 찾을 수 없습니다." (모달 내 인라인)
+     │    └─ 기타       → "취소 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+     └─ 돌아가기 클릭  → 모달 닫힘 (에러 메시지 초기화)
+```
+
+> 서버 측 취소 처리: orderserver가 `OrderCancelled` 이벤트를 발행하면 paymentserver가 이를 수신해 Toss 취소 API를 자동 호출한다. 프론트는 `DELETE /orders/{orderId}` 한 번만 호출하면 된다.
+
+### RTK Query 캐시 무효화
+
+취소 성공 시 `cancelOrder` mutation이 아래 태그를 invalidate하여 OrderDetailPage가 자동으로 최신 상태를 다시 로드한다.
+
+```js
+invalidatesTags: (result, error, orderId) => [
+  { type: 'Order', id: orderId },
+  { type: 'Order', id: 'LIST' },
+]
+```

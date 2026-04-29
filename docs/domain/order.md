@@ -294,7 +294,26 @@ GET /api/v1/orders?start_date=2026-04-01&end_date=2026-04-20&status=ORDER_COMPLE
 
 - **Code:** `404 Not Found`
 
+- **Code:** `409 Conflict` — 현재 상태에서 취소 불가
+
 - **Code:** `500 Internal Server Error`
+
+### 프론트엔드 취소 가능 상태 (`CANCELLABLE_STATES`)
+
+`OrderDetailPage.jsx`는 아래 두 상태일 때만 "구매 취소" 버튼을 노출한다.
+
+```js
+const CANCELLABLE_STATES = ['PAYMENT_COMPLETED', 'ORDER_COMPLETED']
+```
+
+| order_state | 설명 |
+| :--- | :--- |
+| `PAYMENT_COMPLETED` | 결제완료 (배송 전) |
+| `ORDER_COMPLETED` | 주문완료 |
+
+> 취소 요청 시 orderserver가 `OrderCancelled` 이벤트를 발행하고, paymentserver가 이를 수신해 Toss 취소 API를 자동 호출한다. 프론트는 `DELETE /orders/{orderId}` 한 번만 호출한다.
+
+> 취소 성공 시 RTK Query `invalidatesTags`로 `Order/{orderId}` 및 `Order/LIST` 캐시가 무효화되어 목록·상세가 자동 리프레시된다.
 
 ---
 

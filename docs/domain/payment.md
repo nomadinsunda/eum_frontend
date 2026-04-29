@@ -328,7 +328,7 @@ await widgets.requestPayment({
 ## 프론트 연동 흐름
 
 ```
-1. createOrder              → POST /orders/get                  → orderId (Long) 획득
+1. createOrder              → POST /orders/subject              → orderId (Long) 획득
 2. preparePayment           → POST /payments/prepare            → 결제 레코드 생성 (status: READY)
 3. requestPayment           → Toss 위젯 호출 (orderId: `order-${orderId}`)  → 사용자 결제 진행
 4. successUrl 리다이렉트    → /payment/success?paymentKey=...&orderId=order-{id}&amount=...
@@ -340,8 +340,8 @@ await widgets.requestPayment({
 ```
 
 > ⚠️ **알려진 문제 ([CHECKOUT-04])**: step 3에서 Toss `requestPayment`에 `` `order-${orderId}` `` 형식으로 전달하므로,  
-> step 4 이후 URL 파라미터 `orderId`가 `"order-123"` 문자열이 된다.  
-> `PaymentSuccessPage`는 이를 `Number("order-123") = NaN`으로 변환하여 `confirmPayment`·SSE 모두 실패한다.
+> step 4 이후 URL 파라미터 `orderId`가 `"order-123"` 문자열로 수신된다.  
+> **현재 미티게이션**: `PaymentSuccessPage`에서 `rawOrderId.replace('order-', '')`로 prefix를 제거하여 순수 ID 문자열을 사용한다. `Number()` 변환은 하지 않으므로 [PAYMENT-01] Snowflake ID 정밀도 손실도 동시에 회피된다.
 
 > ⚠️ **알려진 문제 ([PAYMENT-01])**: `orderId`가 Snowflake ID(64비트, 약 10¹⁸ 규모) 형태일 경우,  
 > `Number(orderId)` 변환 시 JS `Number.MAX_SAFE_INTEGER`(약 9×10¹⁵)를 초과하여 정밀도가 손실된다.  
@@ -440,10 +440,10 @@ SSE가 먼저 연결을 열어두고, confirm이 서버 측 결제 처리를 트
 ### SSE 구독
 
 ```js
-const { data: sseData } = useSubscribePaymentEventsQuery(Number(orderId), { skip: !orderId })
+const { data: sseData } = useSubscribePaymentEventsQuery(orderId, { skip: !orderId })
 ```
 
-> ⚠️ `Number(orderId)` 는 Snowflake ID 수준의 값에서 정밀도를 잃는다 ([PAYMENT-01]). string 그대로 전달하는 것이 안전하다.
+> `orderId`는 string 그대로 전달한다 (`Number()` 변환 없음). Snowflake ID 수준의 값에서 `Number()` 변환 시 정밀도가 손실되는 [PAYMENT-01] 문제를 회피한 결과다. SSE URL은 템플릿 리터럴이므로 string 전달 시 정상 동작한다.
 
 - `orderId`가 유효한 경우에만 SSE 연결 (`skip: !orderId`)
 - RTK Query `onCacheEntryAdded` 내부에서 `new EventSource()` 생성 → 실제 HTTP 연결 수립
