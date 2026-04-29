@@ -13,6 +13,9 @@ export default defineConfig({
   server: {
     https: true,
     port: 5173,
+    watch: {
+      usePolling: true,
+    },
   },
   resolve: {
     alias: {
