@@ -27,16 +27,12 @@ export default function SearchBar() {
       ? trendingKeywords.map((item) => item.keyword)
       : []
 
-  // Reset highlight when list or input changes
-  useEffect(() => {
-    setHighlightedIndex(-1)
-  }, [searchValue, showAutocomplete, showTrending])
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         setIsSearchFocus(false)
+        setHighlightedIndex(-1)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -62,14 +58,23 @@ export default function SearchBar() {
     navigate(`/product/list?keyword=${encodeURIComponent(term)}`)
   }
 
+  const handleInputChange = (e) => {
+    setSearchValue(e.target.value)
+    setHighlightedIndex(-1)
+  }
+
   const handleKeyDown = (e) => {
+    const len = activeList.length
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setHighlightedIndex((prev) => Math.min(prev + 1, activeList.length - 1))
+      if (len === 0) return
+      setHighlightedIndex((prev) => Math.min(prev + 1, len - 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
-      setHighlightedIndex((prev) => Math.max(prev - 1, -1))
+      if (len === 0) return
+      setHighlightedIndex((prev) => (prev <= 0 ? -1 : prev - 1))
     } else if (e.key === 'Enter') {
+      e.preventDefault()
       if (highlightedIndex >= 0 && activeList[highlightedIndex]) {
         handleSearch(activeList[highlightedIndex])
       } else {
@@ -98,7 +103,7 @@ export default function SearchBar() {
           type="text"
           placeholder="검색어를 입력하세요"
           value={searchValue}
-          onChange={(e) => setSearchValue(e.target.value)}
+          onChange={handleInputChange}
           onFocus={() => setIsSearchFocus(true)}
           onKeyDown={handleKeyDown}
           className="flex-1 outline-none text-[15px] font-medium tracking-normal bg-transparent py-1 text-[#111] caret-[#3ea76e]"
@@ -111,7 +116,7 @@ export default function SearchBar() {
         </button>
         {isSearchFocus && (
           <button
-            onClick={() => { setSearchValue(''); setIsSearchFocus(false) }}
+            onClick={() => { setSearchValue(''); setHighlightedIndex(-1); setIsSearchFocus(false) }}
             className="ml-4 text-[14px] font-bold text-[#999] hover:text-[#111] shrink-0 cursor-pointer bg-transparent border-0"
           >
             취소
@@ -142,7 +147,7 @@ export default function SearchBar() {
                 className={`whitespace-nowrap px-5 py-2.5 rounded-full text-[13px] font-bold transition-all tracking-normal cursor-pointer border border-transparent ${
                   highlightedIndex === idx
                     ? 'bg-[#3ea76e] text-white'
-                    : 'bg-[#f4f7f5] text-[#1B4332] hover:bg-[#3ea76e] hover:text-white'
+                    : 'bg-[#f4f7f5] text-[#1B4332]'
                 }`}
               >
                 {item.keyword}
@@ -163,7 +168,7 @@ export default function SearchBar() {
               className={`w-full text-left px-4 py-3 text-[14px] font-medium rounded-xl transition-all border-0 bg-transparent cursor-pointer flex items-center gap-3 ${
                 highlightedIndex === idx
                   ? 'bg-[#f4f7f5] text-[#3ea76e]'
-                  : 'text-[#111] hover:bg-[#f4f7f5] hover:text-[#3ea76e]'
+                  : 'text-[#111]'
               }`}
             >
               <Search size={14} className="text-[#999] shrink-0" />
