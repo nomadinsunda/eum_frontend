@@ -1,6 +1,6 @@
 # 프로젝트 구조
 
-기준일: 2026-04-24 (react-day-picker·date-fns 추가 / cart API URL 변경 / CheckoutPage 배송메시지·Toss위젯 수정 / searchApi 네비게이션·리뷰헤더 추가)
+기준일: 2026-04-29 (SearchBar 실서버 연동 + 키보드 네비게이션 / useStorePageController keyword 파라미터 추가 / CartPage 가격 계산 버그 수정 / vite.config.js usePolling 추가)
 
 ---
 
@@ -41,7 +41,7 @@ src/
 │   ├── product/
 │   │   ├── productSlice.js       검색어·필터·페이지·정렬 UI 상태 (카테고리·서브카테고리는 URL이 단일 진실 공급원)
 │   │   ├── StoreProductGrid.jsx  상품 그리드 컴포넌트
-│   │   └── useStorePageController.js  URL ?categoryId= / ?sub= 기반 완전 URL 구동 — 카테고리·서브카테고리 모두 URL 파라미터로 관리
+│   │   └── useStorePageController.js  URL ?categoryId= / ?sub= / ?keyword= 기반 완전 URL 구동 — keyword 존재 시 category 필터 해제
 │   ├── review/
 │   │   └── reviewSlice.js        정렬·페이지 UI 상태
 │   ├── ui/
@@ -59,7 +59,7 @@ src/
 │       │   ├── Layout.jsx        Header + Outlet + Footer
 │       │   ├── Header.jsx        2계층 GNB: 상단(STORE·베스트셀러·브랜드스토리 고정) + Store 서브네비(카테고리 API 동적, /product/list 한정)
 │       │   ├── Footer.jsx
-│       │   └── SearchBar.jsx
+│       │   └── SearchBar.jsx     인기검색어(trending API)·자동완성(autocomplete API)·키보드 네비게이션·/product/list?keyword= 이동
 │       ├── review/
 │       │   ├── ReviewItem.jsx
 │       │   ├── ReviewList.jsx
@@ -69,7 +69,7 @@ src/
 │
 ├── pages/                        라우트 진입점 페이지 컴포넌트
 │   ├── LandingPage.jsx           /
-│   ├── StorePage.jsx             /product/list  (?categoryId= / ?sub= URL 파라미터로 카테고리·서브카테고리 구동)
+│   ├── StorePage.jsx             /product/list  (?categoryId= / ?sub= / ?keyword= URL 파라미터로 구동)
 │   ├── ProductDetailPage.jsx     /product/detail/:id
 │   ├── BestSellerPage.jsx        /best
 │   ├── CartPage.jsx              /cart (보호)
@@ -274,6 +274,7 @@ GET /users/me ─────────►  로그인 사용자 정보 반환
 | MyPageLayout | CLAUDE.md 목표 아키텍처에는 존재하나 현재 미구현 (각 마이페이지는 독립 페이지) |
 | baseQuery.js | 별도 파일 없음 — withReauth 로직이 `src/api/apiSlice.js` 내부에 포함됨 |
 | createOrder 응답 | 서버가 text/plain(`200001`)으로 orderId 반환 — `transformResponse`에서 `typeof res === 'number' ? res : Number(res)` 로 파싱. 응답 포맷 변경 시 결제 플로우 중단됨 |
-| cancelOrder | 서버 saga 비활성화로 현재 409 반환. 취소 UI 구현 시 서버 상태 확인 필요 |
+| cancelOrder | `OrderDetailPage`에서 `useCancelOrderMutation` 사용. `PAYMENT_COMPLETED` / `ORDER_COMPLETED` 상태에서만 취소 버튼 노출. |
 | constants.js 누락 | `RETURN_DEADLINE_DAYS`, `ORDER_PAGE_SIZE`, `ORDER_STATUS` 등 order.md에 명시된 상수가 실제 코드에 없음 |
 | .env 마지막 줄 개행 | `.env` 파일 마지막 줄에 개행문자가 없으면 dotenv 파서가 해당 줄을 읽지 못함. `VITE_TOSS_CLIENT_KEY`가 마지막 줄이면 미적용됨. `.env` 편집 후 반드시 마지막 줄 뒤에 개행 확인 (`cat -A .env`로 `$` 유무 확인) |
+| Vite HMR (Windows) | `vite.config.js`에 `server.watch.usePolling: true` 설정 — Windows에서 chokidar native fs 이벤트 누락으로 HMR이 동작하지 않는 문제 방지 |

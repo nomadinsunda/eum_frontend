@@ -1,7 +1,7 @@
 # CartServer API 명세서
 
 > Base URL: `https://localhost:8072/api/v1/cart`
-> 기준일: 2026-04-24 (확정)
+> 기준일: 2026-04-29
 
 ---
 
@@ -165,3 +165,33 @@ Response: CartResponse
 - 전체 삭제 시 현재 장바구니 전체 items를 담아 호출
 
 Response: CartResponse
+
+---
+
+## CartPage 구현 노트 (`src/pages/CartPage.jsx`)
+
+### 가격 계산 구조
+
+각 `CartItemRow`가 자체적으로 상품 API를 호출해 단가를 계산한 뒤 `onPriceReady(key, price)` 콜백으로 부모에 보고한다.
+
+```
+CartPage (priceMap state)
+  └── CartItemRow × N
+        └── useGetProductByIdQuery(productId)
+              → unitPrice = product.price + selectedOption?.extra
+              → totalItemPrice = unitPrice × quantity
+              → onPriceReady(itemKey, totalItemPrice)  ← useEffect로 보고
+```
+
+선택된 항목의 합계:
+```js
+totalProductPrice = allItems
+  .filter(i => checkedIds.includes(itemKey(i)))
+  .reduce((sum, i) => sum + (priceMap[itemKey(i)] ?? 0), 0)
+```
+
+### 주의: 삭제 후 가격 0 표시 버그 (수정 완료, 2026-04-29)
+
+**원인**: `resetToFirst()`에서 `setPriceMap({})`로 가격 맵을 동기적으로 비웠을 때, `allItems`는 비동기 refetch 완료 전까지 이전 항목을 유지해 모든 가격이 `0`으로 계산됨.
+
+**수정**: `resetToFirst()`에서 `setPriceMap({})` 제거. 삭제된 항목은 이미 `toggleCheckItem`으로 `checkedIds`에서 제거되므로 합계에 미포함. 나머지 항목의 priceMap 값은 그대로 유효하게 유지됨.
