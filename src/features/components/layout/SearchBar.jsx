@@ -10,11 +10,27 @@ export default function SearchBar() {
 
   const [isSearchFocus, setIsSearchFocus] = useState(false)
   const [searchValue, setSearchValue] = useState('')
+  const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const [isDrag, setIsDrag] = useState(false)
   const [startX, setStartX] = useState(0)
 
   const { data: trendingKeywords = [] } = useGetTrendingKeywordsQuery()
   const [triggerAutocomplete, { data: autocompleteItems = [] }] = useLazyGetAutocompleteQuery()
+
+  const hasInput = searchValue.trim().length > 0
+  const showAutocomplete = isSearchFocus && hasInput && autocompleteItems.length > 0
+  const showTrending = isSearchFocus && !hasInput && trendingKeywords.length > 0
+
+  const activeList = showAutocomplete
+    ? autocompleteItems.slice(0, 8).map((item) => item.title)
+    : showTrending
+      ? trendingKeywords.map((item) => item.keyword)
+      : []
+
+  // Reset highlight when list or input changes
+  useEffect(() => {
+    setHighlightedIndex(-1)
+  }, [searchValue, showAutocomplete, showTrending])
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -41,12 +57,28 @@ export default function SearchBar() {
     const term = (keyword ?? searchValue).trim()
     if (!term) return
     setSearchValue(term)
+    setHighlightedIndex(-1)
     setIsSearchFocus(false)
     navigate(`/product/list?keyword=${encodeURIComponent(term)}`)
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') handleSearch()
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setHighlightedIndex((prev) => Math.min(prev + 1, activeList.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHighlightedIndex((prev) => Math.max(prev - 1, -1))
+    } else if (e.key === 'Enter') {
+      if (highlightedIndex >= 0 && activeList[highlightedIndex]) {
+        handleSearch(activeList[highlightedIndex])
+      } else {
+        handleSearch()
+      }
+    } else if (e.key === 'Escape') {
+      setIsSearchFocus(false)
+      setHighlightedIndex(-1)
+    }
   }
 
   const onDragStart = (e) => {
@@ -58,10 +90,6 @@ export default function SearchBar() {
   const onDragMove = (e) => {
     if (isDrag) scrollRef.current.scrollLeft = startX - e.pageX
   }
-
-  const hasInput = searchValue.trim().length > 0
-  const showAutocomplete = isSearchFocus && hasInput && autocompleteItems.length > 0
-  const showTrending = isSearchFocus && !hasInput && trendingKeywords.length > 0
 
   return (
     <div ref={containerRef} className="flex-1 max-w-[500px] mx-10 relative">
@@ -105,11 +133,17 @@ export default function SearchBar() {
             onMouseLeave={onDragEnd}
             className="flex flex-nowrap gap-2 overflow-x-auto scrollbar-hide pb-2 cursor-grab active:cursor-grabbing select-none"
           >
-            {trendingKeywords.map((item) => (
+            {trendingKeywords.map((item, idx) => (
               <button
                 key={item.keyword}
                 onClick={() => { if (!isDrag) handleSearch(item.keyword) }}
-                className="whitespace-nowrap px-5 py-2.5 rounded-full text-[13px] font-bold text-[#1B4332] hover:bg-[#3ea76e] hover:text-white transition-all tracking-normal cursor-pointer border border-transparent bg-[#f4f7f5]"
+                onMouseEnter={() => setHighlightedIndex(idx)}
+                onMouseLeave={() => setHighlightedIndex(-1)}
+                className={`whitespace-nowrap px-5 py-2.5 rounded-full text-[13px] font-bold transition-all tracking-normal cursor-pointer border border-transparent ${
+                  highlightedIndex === idx
+                    ? 'bg-[#3ea76e] text-white'
+                    : 'bg-[#f4f7f5] text-[#1B4332] hover:bg-[#3ea76e] hover:text-white'
+                }`}
               >
                 {item.keyword}
               </button>
@@ -120,11 +154,17 @@ export default function SearchBar() {
 
       {showAutocomplete && (
         <div className="absolute top-[calc(100%+10px)] left-0 w-full bg-white shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] px-4 py-3 z-[200] border border-gray-100 rounded-[24px]">
-          {autocompleteItems.slice(0, 8).map((item) => (
+          {autocompleteItems.slice(0, 8).map((item, idx) => (
             <button
               key={item.id ?? item.title}
               onClick={() => handleSearch(item.title)}
-              className="w-full text-left px-4 py-3 text-[14px] font-medium text-[#111] hover:text-[#3ea76e] hover:bg-[#f4f7f5] rounded-xl transition-all border-0 bg-transparent cursor-pointer flex items-center gap-3"
+              onMouseEnter={() => setHighlightedIndex(idx)}
+              onMouseLeave={() => setHighlightedIndex(-1)}
+              className={`w-full text-left px-4 py-3 text-[14px] font-medium rounded-xl transition-all border-0 bg-transparent cursor-pointer flex items-center gap-3 ${
+                highlightedIndex === idx
+                  ? 'bg-[#f4f7f5] text-[#3ea76e]'
+                  : 'text-[#111] hover:bg-[#f4f7f5] hover:text-[#3ea76e]'
+              }`}
             >
               <Search size={14} className="text-[#999] shrink-0" />
               {item.title}
