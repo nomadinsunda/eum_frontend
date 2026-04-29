@@ -20,7 +20,7 @@
 |---|---|---|---|
 | `useGetProfileQuery()` | GET | `/users/profile` | 마이페이지 집계 데이터 (적립금·쿠폰 수·주문 건수 등) |
 | `useUpdateProfileMutation` | PUT | `/users/profile` | 회원정보 수정 (비밀번호·이름·전화번호·마케팅 동의) |
-| `useDeleteAccountMutation` | DELETE | `/users` | 회원 탈퇴 — `body: { password }` |
+| `useDeleteAccountMutation` | DELETE | `/users` | 회원 탈퇴 — `body: { password? }` (소셜 계정은 password 생략 가능) |
 
 `updateProfile` 성공 시 `invalidatesTags: ['Auth', 'User']` → `getMe` + `getProfile` 캐시 모두 갱신.
 
