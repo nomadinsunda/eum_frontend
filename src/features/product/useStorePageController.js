@@ -29,23 +29,25 @@ export default function useStorePageController() {
   // URL이 단일 진실 공급원 — Redux 상태 불필요
   const categoryId    = searchParams.get('categoryId') ?? 'ALL'
   const subCategoryId = searchParams.get('sub') ?? null
+  const keyword       = searchParams.get('keyword') ?? undefined
 
   const { data: categories = [] } = useGetCategoriesQuery()
   const activeCategory = categories.find(c => c.id === categoryId)
     ?? { id: 'ALL', name: 'ALL', subCategories: [] }
 
-  // 카테고리 변경 시 페이지 초기화
+  // 카테고리 또는 키워드 변경 시 페이지 초기화
   useEffect(() => {
     dispatch(setPage(1))
-  }, [categoryId, dispatch])
+  }, [categoryId, keyword, dispatch])
 
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [currentPage, categoryId])
 
   const { data, isFetching } = useSearchProductsQuery({
-    category:    categoryId === 'ALL' ? undefined : categoryId,
+    category:    !keyword && categoryId !== 'ALL' ? categoryId : undefined,
     subCategory: subCategoryId ?? undefined,
+    keyword,
     sortType:    SORT_TYPE_MAP[sortLabel],
     page:        currentPage - 1,
   })
