@@ -1,13 +1,36 @@
+import { useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
-import { useGetOrderByIdQuery } from '../api/orderApi'
+import { useGetOrderByIdQuery, useCancelOrderMutation } from '../api/orderApi'
 import { useGetProductSummaryQuery } from '../api/productApi'
 import Spinner from '../shared/components/Spinner'
+
+const CANCELLABLE_STATES = ['PAYMENT_COMPLETED', 'ORDER_COMPLETED']
 
 export default function OrderDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [cancelError, setCancelError] = useState('')
 
   const { data: order, isLoading, isError } = useGetOrderByIdQuery(id)
+  const [cancelOrder, { isLoading: isCancelling }] = useCancelOrderMutation()
+
+  const handleCancelConfirm = async () => {
+    setCancelError('')
+    try {
+      await cancelOrder(id).unwrap()
+      setShowConfirm(false)
+    } catch (err) {
+      const status = err?.status
+      if (status === 409) {
+        setCancelError('현재 상태에서는 취소할 수 없습니다.')
+      } else if (status === 404) {
+        setCancelError('주문 정보를 찾을 수 없습니다.')
+      } else {
+        setCancelError('취소 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')
+      }
+    }
+  }
 
 
   if (isLoading) return <Spinner fullscreen />
@@ -155,7 +178,15 @@ export default function OrderDetailPage() {
         )}
 
         {/* 하단 버튼 */}
-        <div className="pt-16">
+        <div className="pt-16 flex flex-col gap-4">
+          {CANCELLABLE_STATES.includes(order.status) && (
+            <button
+              onClick={() => { setCancelError(''); setShowConfirm(true) }}
+              className="w-full h-16 rounded-full bg-white border-2 border-[#ef4444] text-[#ef4444] font-black text-[18px] tracking-[-0.05em] hover:bg-[#fef2f2] transition-all active:scale-[0.98] cursor-pointer"
+            >
+              구매 취소
+            </button>
+          )}
           <button
             onClick={() => navigate('/order/list')}
             className="w-full h-20 rounded-full bg-[#3ea76e] text-white font-black text-[20px] tracking-[-0.05em] hover:bg-[#318a57] transition-all active:scale-[0.98] border-none cursor-pointer shadow-lg shadow-[#3ea76e/20]"
@@ -164,6 +195,37 @@ export default function OrderDetailPage() {
           </button>
         </div>
       </div>
+
+      {/* 구매 취소 확인 모달 */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="bg-white rounded-[32px] p-10 w-full max-w-sm shadow-2xl">
+            <h2 className="text-[22px] font-black text-[#111] mb-3 tracking-tight">구매를 취소하시겠습니까?</h2>
+            <p className="text-[14px] text-[#888] mb-8 leading-relaxed">
+              취소 시 결제가 전액 환불되며, 이 작업은 되돌릴 수 없습니다.
+            </p>
+            {cancelError && (
+              <p className="text-[13px] text-[#ef4444] font-bold mb-5">{cancelError}</p>
+            )}
+            <div className="flex gap-3">
+              <button
+                onClick={() => { setShowConfirm(false); setCancelError('') }}
+                disabled={isCancelling}
+                className="flex-1 h-14 rounded-full border border-[#eee] text-[#555] font-bold text-[15px] bg-white hover:bg-[#f9f9f9] transition-all cursor-pointer disabled:opacity-50"
+              >
+                돌아가기
+              </button>
+              <button
+                onClick={handleCancelConfirm}
+                disabled={isCancelling}
+                className="flex-1 h-14 rounded-full bg-[#ef4444] text-white font-black text-[15px] border-none hover:bg-[#dc2626] transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isCancelling ? '처리 중...' : '취소 확인'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
