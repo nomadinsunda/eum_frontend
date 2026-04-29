@@ -196,7 +196,6 @@ export default function CartPage() {
   // ── 공통 리셋 — 아이템 변경 mutation 후 page 0부터 다시 로드 ─────────────────
   const resetToFirst = () => {
     processedPagesRef.current = new Set()
-    setPriceMap({})
     setPage(0)
   }
 
