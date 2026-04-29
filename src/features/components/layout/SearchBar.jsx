@@ -6,6 +6,7 @@ import { useGetTrendingKeywordsQuery, useLazyGetAutocompleteQuery } from '@/api/
 export default function SearchBar() {
   const navigate = useNavigate()
   const containerRef = useRef(null)
+  const inputRef = useRef(null)
   const scrollRef = useRef(null)
 
   const [isSearchFocus, setIsSearchFocus] = useState(false)
@@ -27,6 +28,10 @@ export default function SearchBar() {
       ? trendingKeywords.map((item) => item.keyword)
       : []
 
+  // 최신 상태를 ref로 유지 — document keydown 핸들러에서 stale closure 방지
+  const stateRef = useRef({})
+  stateRef.current = { isSearchFocus, activeList, highlightedIndex, searchValue }
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -38,6 +43,42 @@ export default function SearchBar() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // document 레벨 keydown — input DOM focus 여부와 무관하게 동작
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const { isSearchFocus, activeList, highlightedIndex, searchValue } = stateRef.current
+      if (!isSearchFocus) return
+
+      const len = activeList.length
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        if (len === 0) return
+        setHighlightedIndex((prev) => Math.min(prev + 1, len - 1))
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        if (len === 0) return
+        setHighlightedIndex((prev) => (prev <= 0 ? -1 : prev - 1))
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        const term = highlightedIndex >= 0 && activeList[highlightedIndex]
+          ? activeList[highlightedIndex]
+          : searchValue.trim()
+        if (!term) return
+        setSearchValue(term)
+        setHighlightedIndex(-1)
+        setIsSearchFocus(false)
+        navigate(`/product/list?keyword=${encodeURIComponent(term)}`)
+      } else if (e.key === 'Escape') {
+        setIsSearchFocus(false)
+        setHighlightedIndex(-1)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [navigate])
 
   // Debounced autocomplete
   useEffect(() => {
@@ -63,29 +104,6 @@ export default function SearchBar() {
     setHighlightedIndex(-1)
   }
 
-  const handleKeyDown = (e) => {
-    const len = activeList.length
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      if (len === 0) return
-      setHighlightedIndex((prev) => Math.min(prev + 1, len - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      if (len === 0) return
-      setHighlightedIndex((prev) => (prev <= 0 ? -1 : prev - 1))
-    } else if (e.key === 'Enter') {
-      e.preventDefault()
-      if (highlightedIndex >= 0 && activeList[highlightedIndex]) {
-        handleSearch(activeList[highlightedIndex])
-      } else {
-        handleSearch()
-      }
-    } else if (e.key === 'Escape') {
-      setIsSearchFocus(false)
-      setHighlightedIndex(-1)
-    }
-  }
-
   const onDragStart = (e) => {
     e.preventDefault()
     setIsDrag(true)
@@ -100,12 +118,12 @@ export default function SearchBar() {
     <div ref={containerRef} className="flex-1 max-w-[500px] mx-10 relative">
       <div className={`flex items-center rounded-full px-6 py-2.5 transition-all shadow-sm ${isSearchFocus ? 'ring-2 ring-[#3ea76e] shadow-lg' : ''}`}>
         <input
+          ref={inputRef}
           type="text"
           placeholder="검색어를 입력하세요"
           value={searchValue}
           onChange={handleInputChange}
           onFocus={() => setIsSearchFocus(true)}
-          onKeyDown={handleKeyDown}
           className="flex-1 outline-none text-[15px] font-medium tracking-normal bg-transparent py-1 text-[#111] caret-[#3ea76e]"
         />
         <button
@@ -165,10 +183,10 @@ export default function SearchBar() {
               onClick={() => handleSearch(item.title)}
               onMouseEnter={() => setHighlightedIndex(idx)}
               onMouseLeave={() => setHighlightedIndex(-1)}
-              className={`w-full text-left px-4 py-3 text-[14px] font-medium rounded-xl transition-all border-0 bg-transparent cursor-pointer flex items-center gap-3 ${
+              className={`w-full text-left px-4 py-3 text-[14px] font-medium rounded-xl transition-all border-0 cursor-pointer flex items-center gap-3 ${
                 highlightedIndex === idx
                   ? 'bg-[#f4f7f5] text-[#3ea76e]'
-                  : 'text-[#111]'
+                  : 'bg-transparent text-[#111]'
               }`}
             >
               <Search size={14} className="text-[#999] shrink-0" />
