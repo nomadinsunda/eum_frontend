@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  ChevronRight, Headphones, MessageSquare, Info,
-  Bot, Send, FileText, RotateCcw,
+  ChevronRight, Headphones, Info,
+  Bot, Send, RotateCcw,
 } from 'lucide-react'
 import { useRagChatMutation, useGetSessionHistoryQuery } from '@/api/ragApi'
 
@@ -178,19 +178,6 @@ const CSPage = () => {
                 }`}>
                   {msg.text}
                 </div>
-                {msg.sources?.length > 0 && (
-                  <div className="max-w-[80%] flex flex-col gap-1.5">
-                    {msg.sources.map((src, si) => (
-                      <div key={si} className="flex items-start gap-2 px-3 py-2 bg-[#f0faf4] rounded-2xl border border-[#d4eddf]">
-                        <FileText size={12} className="text-[#3ea76e] mt-0.5 shrink-0" />
-                        <div>
-                          <span className="text-[11px] font-black text-[#3ea76e] block mb-0.5">{src.filename}</span>
-                          <span className="text-[11px] font-bold text-[#888] leading-relaxed">{src.snippet}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             ))}
             {isLoading && (
@@ -234,7 +221,6 @@ const CSPage = () => {
           <div className="grid grid-cols-1 gap-4">
             {[
               { title: 'NOTICE', link: '/notice', icon: <Info size={20} className="text-[#ccc] group-hover:text-[#3ea76e] transition-colors" />, desc: 'eum의 새로운 소식을 확인하세요.' },
-              { title: 'FAQ', link: '/faq', icon: <MessageSquare size={20} className="text-[#ccc] group-hover:text-[#3ea76e] transition-colors" />, desc: '자주 묻는 질문들을 모아두었습니다.' },
             ].map((item, index) => (
               <Link
                 key={index}

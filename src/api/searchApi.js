@@ -247,25 +247,6 @@ export const searchApi = apiSlice.injectEndpoints({
       providesTags: [{ type: 'Search', id: 'NOTICES' }],
     }),
 
-    // ── 9-1. FAQ 검색 ─────────────────────────────────────────────────────
-    /**
-     * GET /faq  (경로 주의: /search/faq 아님)
-     * @param {{ searchRange?, searchType?, keyword?, page? }} params
-     * size 파라미터는 서버에서 항상 10으로 고정 처리 — 미전송
-     */
-    searchFaqs: builder.query({
-      query: (params = {}) => ({ url: '/faq', params }),
-      transformResponse: (res) => normalizePage(res, (f) => ({
-        id:           f.faqId,
-        title:        f.title         ?? '',
-        author:       f.author        ?? '',
-        createdAt:    f.createdAt     ?? null,
-        viewCount:    f.viewCount     ?? 0,
-        faqDetailUrl: f.faqDetailUrl  ?? null,
-      })),
-      providesTags: [{ type: 'FAQ', id: 'LIST' }],
-    }),
-
     // ── 10. 메인 히어로 배너 ──────────────────────────────────────────────────
     /**
      * GET /search/products/main-banners
@@ -401,7 +382,6 @@ export const {
   useGetTrendingKeywordsQuery,
   useSearchReviewsQuery,
   useSearchNoticesQuery,
-  useSearchFaqsQuery,
   useGetMainBannersQuery,
   useGetNavigationQuery,
   useGetReviewHeaderQuery,
